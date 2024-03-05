@@ -63,27 +63,67 @@ void printerror(int index) {
             printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
         }
     }
+
+    printf("\n");
+    // if (lexemeList[index].tokenType == 3) { // IF NUMBER
+    //     if (lexemeList[index].error == 1) {
+    //         fprintf(outputFile, "\n%d\t\t", lexemeList[index].number);
+    //         fprintf(outputFile, "NUMBER TOO LONG");
+    //     } else {
+    //         fprintf(outputFile, "\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
+    //     }
+
+    // } else { // NOT NUMBER
+    //     if (lexemeList[index].error == 2) {
+    //         fprintf(outputFile, "\n%s\t\t", lexemeList[index].tokenName);
+    //         fprintf(outputFile, "NAME TOO LONG");
+    //     } else if (lexemeList[index].error == 3) {
+    //         fprintf(outputFile, "\n%s\t\t", lexemeList[index].tokenName);
+    //         fprintf(outputFile, "INVALID SYMBOLS");
+    //     } else {
+    //         fprintf(outputFile, "\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
+    //     }
+    // }
 }
 
-void printLexList() {
+void printLexList(FILE * outputFile) {
     printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
     for (int i = 0; i < lexSize; i++) {
         printerror(i);
     }
+    // //prints lexeme list
+    // printf("\n\nToken List\n");
+    // for (int j = 0; j < lexSize; j++){
+    //     if (lexemeList[j].error != -1) {
+    //         continue;
+    //     }
+    //     printf("%d ", lexemeList[j].tokenType);
+    //     if(lexemeList[j].tokenType == 2){
+    //         printf("%s ", lexemeList[j].tokenName);
+    //     } else if (lexemeList[j].tokenType == 3){
+    //         printf("%d ", lexemeList[j].number);
+    //     }
+    // }
+    // printf("\n");
+
+    // fprintf(outputFile, "\nLexeme Table:\nLexeme\t\tToken Type\n");
+    // for (int i = 0; i < lexSize; i++) {
+    //     printerror(i, outputFile);
+    // }
     //prints lexeme list
-    printf("\n\nToken List\n");
-    for (int j = 0; j < lexSize; j++){
+    // fprintf(outputFile, "\n\nToken List\n");
+    for (int j = 0; j < lexSize; j++) {
         if (lexemeList[j].error != -1) {
             continue;
         }
-        printf("%d ", lexemeList[j].tokenType);
-        if(lexemeList[j].tokenType == 2){
-            printf("%s ", lexemeList[j].tokenName);
-        } else if (lexemeList[j].tokenType == 3){
-            printf("%d ", lexemeList[j].number);
+        fprintf(outputFile, "%d ", lexemeList[j].tokenType);
+        if (lexemeList[j].tokenType == 2) {
+            fprintf(outputFile, "%s ", lexemeList[j].tokenName);
+        } else if (lexemeList[j].tokenType == 3) {
+            fprintf(outputFile, "%d ", lexemeList[j].number);
         }
     }
-    printf("\n");
+    fprintf(outputFile, "\n");
 }
 
 tokenStruct * assignResToken(int isResWord, char * word) {
@@ -282,6 +322,8 @@ int main(int argc, char ** argv) {
     bool sameToken = false; //used in the event of multiple character tokens
 
     FILE *input = fopen(argv[1], "r");
+    FILE * outputFile = fopen("output.txt", "w");
+
     int token = fgetc(input); //stores each character in file
     printSourceProgram(input);
     fclose(input);
@@ -380,7 +422,8 @@ int main(int argc, char ** argv) {
         }
         if (sameToken == 0) token = fgetc(input);
     }
-    printLexList();
+    printLexList(outputFile);
 
    free(lexemeList);
+   fclose(outputFile);
 }
