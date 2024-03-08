@@ -25,7 +25,7 @@ typedef struct{
     char tokenName[MAX_WORD]; 
 } tokenStruct;
 
-
+// symbol table struct
 typedef struct {
     int kind; // const = 1, var = 2, proc = 3
     char name[10]; // name up to 11 chars
@@ -35,96 +35,59 @@ typedef struct {
     int mark // to indicate unavailable or deleted
 } symbol;
 
-symbolTable[MAX_SYMBOL_TABLE_SIZE];
+// array for symbol table
+symbol * symbolTable[MAX_SYMBOL_TABLE_SIZE];
+int symIndex = 0; // keeps track of symbol table index
 
-//array for reserved words names
+// array for reserved words names
 char *reservedWords[] = {"const", "var", "procedure", "call", "begin", "end", "if", "fi", "then", "else", "while", "do", "read", "write"};
 
-//array for special symbols
+// array for special symbols
 char specialSymbols[] = {'+', '-', '*', '/', '(', ')', '=', ',', '.', '<', '>', ';', ':'};
 
 tokenStruct * lexemeList; //array of token structs
 int lexSize = 0;   //keeps track of array location
 
 void printSourceProgram(FILE * fp) {
-    printf("Source Program: \n");
-    char input;
+    // printf("Source Program: \n");
+    // char input;
 
-    fseek(fp, 0, SEEK_SET);
-    while((input = fgetc(fp)) != EOF) {
-        putchar(input);
-    }
+    // fseek(fp, 0, SEEK_SET);
+    // while((input = fgetc(fp)) != EOF) {
+    //     putchar(input);
+    // }
 }
 
 void printerror(int index) {
-    if (lexemeList[index].tokenType == 3){ // IF NUMBER
-        if(lexemeList[index].error == 1){
-            printf("\n%d\t\t", lexemeList[index].number);
-            printf("NUMBER TOO LONG");
-        } else {
-            printf("\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
-        }
-        
-    }else{ // NOT NUMBER
-        if(lexemeList[index].error == 2){
-            printf("\n%s\t\t", lexemeList[index].tokenName);
-            printf("NAME TOO LONG");
-        }else if(lexemeList[index].error == 3){
-            printf("\n%s\t\t", lexemeList[index].tokenName);
-            printf("INVALID SYMBOLS");
-        } else {
-            printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
-        }
-    }
-
-    printf("\n");
-    // if (lexemeList[index].tokenType == 3) { // IF NUMBER
-    //     if (lexemeList[index].error == 1) {
-    //         fprintf(outputFile, "\n%d\t\t", lexemeList[index].number);
-    //         fprintf(outputFile, "NUMBER TOO LONG");
+    // if (lexemeList[index].tokenType == 3){ // IF NUMBER
+    //     if(lexemeList[index].error == 1){
+    //         printf("\n%d\t\t", lexemeList[index].number);
+    //         printf("NUMBER TOO LONG");
     //     } else {
-    //         fprintf(outputFile, "\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
+    //         printf("\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
     //     }
-
-    // } else { // NOT NUMBER
-    //     if (lexemeList[index].error == 2) {
-    //         fprintf(outputFile, "\n%s\t\t", lexemeList[index].tokenName);
-    //         fprintf(outputFile, "NAME TOO LONG");
-    //     } else if (lexemeList[index].error == 3) {
-    //         fprintf(outputFile, "\n%s\t\t", lexemeList[index].tokenName);
-    //         fprintf(outputFile, "INVALID SYMBOLS");
+        
+    // }else{ // NOT NUMBER
+    //     if(lexemeList[index].error == 2){
+    //         printf("\n%s\t\t", lexemeList[index].tokenName);
+    //         printf("NAME TOO LONG");
+    //     }else if(lexemeList[index].error == 3){
+    //         printf("\n%s\t\t", lexemeList[index].tokenName);
+    //         printf("INVALID SYMBOLS");
     //     } else {
-    //         fprintf(outputFile, "\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
+    //         printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
     //     }
     // }
+
+    // printf("\n");
 }
 
 void printLexList(FILE * outputFile) {
-    printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
-    for (int i = 0; i < lexSize; i++) {
-        printerror(i);
-    }
-    // //prints lexeme list
-    // printf("\n\nToken List\n");
-    // for (int j = 0; j < lexSize; j++){
-    //     if (lexemeList[j].error != -1) {
-    //         continue;
-    //     }
-    //     printf("%d ", lexemeList[j].tokenType);
-    //     if(lexemeList[j].tokenType == 2){
-    //         printf("%s ", lexemeList[j].tokenName);
-    //     } else if (lexemeList[j].tokenType == 3){
-    //         printf("%d ", lexemeList[j].number);
-    //     }
-    // }
-    // printf("\n");
-
-    // fprintf(outputFile, "\nLexeme Table:\nLexeme\t\tToken Type\n");
+    // printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
     // for (int i = 0; i < lexSize; i++) {
-    //     printerror(i, outputFile);
+    //     printerror(i);
     // }
-    //prints lexeme list
-    // fprintf(outputFile, "\n\nToken List\n");
+    
     for (int j = 0; j < lexSize; j++) {
         if (lexemeList[j].error != -1) {
             continue;
@@ -331,11 +294,95 @@ tokenStruct * assignSymbolToken (int sym, char * invalidSymbol, FILE * input, in
     }
 }
 
+int SYMBOLTABLECHECK(int token) {
+    for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
+        if (strcmp(symbolTable[i]->name, token) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+token_type getToken(int index) {
+    // index is + 1
+    if (index == lexSize) {
+        return -1;
+    } else {
+        return lexemeList[index].tokenType;
+    }
+}
+
+void constDeclaration() {
+    char tmpName[11];
+
+    int token = getToken(lexIndex+=1);
+
+    if (token != identsym) {
+        // const, var, and read keywords must be followed by identifier
+    } else if (SYMBOLTABLECHECK(token) != -1) {
+        // symbol name has already been declared
+    } else {
+        // Save name
+        strcpy(tmpName, lexemeList[lexIndex].tokenName);
+        token = getToken(lexIndex+=1);
+        if (token != eqsym) {
+            // constants must be assigned with =
+        } else {
+            token = getToken(lexIndex+=1);
+            if (token != numbersym) {
+                // constants must be assigned an integer value
+            } else {
+                // Add to symbol table
+                symbolTable[symIndex]->kind = 1;
+                strcpy(symbolTable[symIndex]->name, tmpName);
+                symbolTable[symIndex]->val = lexemeList[lexIndex].number;
+                symbolTable[symIndex]->level = 0;
+                symbolTable[symIndex]->mark = 0;
+
+                symIndex++; // increment symbol table index
+                // return getToken(index+=1);
+            }
+        }
+    }
+}
+
+void varDeclaration() {
+    int count = 0; // num vars declared
+
+    int token = getToken(lexIndex+=1);
+
+    if (token != identsym) {
+        // const, var, and read keywords must be followed by identifier
+    } else if (SYMBOLTABLECHECK(token) != -1) {
+        // symbol name has already been declared
+    } else {
+        token = getToken(lexIndex+=1);
+        if (token != numbersym) {
+            // constants must be assigned an integer value
+        } else {
+            // Add to symbol table
+            count++;
+
+            symbolTable[symIndex]->kind = 2;
+            strcpy(symbolTable[symIndex]->name, lexemeList[lexIndex].tokenName);
+            symbolTable[symIndex]->val = lexemeList[lexIndex].number;
+            symbolTable[symIndex]->level = 0;
+            symbolTable[symIndex]->addr = count+2;
+            symbolTable[symIndex]->mark = 0;
+
+            symIndex++; // increment symbol table index
+        }
+    }
+    // return count;
+}
+// To iterate through the lexeme list to populate the symbol table
+int lexIndex = 0;
+
 int main(int argc, char ** argv) {
     bool sameToken = false; //used in the event of multiple character tokens
 
     FILE *input = fopen(argv[1], "r");
-    FILE * outputFile = fopen("output.txt", "w");
+    FILE * tokenFile = fopen("tokens.txt", "w");
 
     int token = fgetc(input); //stores each character in file
     printSourceProgram(input);
@@ -435,8 +482,38 @@ int main(int argc, char ** argv) {
         }
         if (sameToken == 0) token = fgetc(input);
     }
-    printLexList(outputFile);
+    printLexList(tokenFile);
 
    free(lexemeList);
-   fclose(outputFile);
+   fclose(tokenFile);
+
+//    fopen("tokens.txt", "r");
+    
+   // parser code here
+    if (getToken(lexIndex) == constsym) {
+        do{
+            constDeclaration(lexIndex, lexemeList);
+        } while(getToken(lexIndex+=1) == commasym);
+
+        if (getToken(lexIndex) != semicolonsym) {
+            // constant and variable declarations must be followed by a semicolon
+        }
+        lexIndex++;
+    }
+
+   
+    // int numVars = 0;
+    if (getToken(lexIndex) == varsym) {
+            do{
+                // numVars = varDeclaration(numVars, lexIndex, lexemeList);
+                varDeclaration(lexIndex, lexemeList);
+            } while(getToken(lexIndex+=1) == commasym);
+
+            if (getToken(lexIndex) != semicolonsym) {
+                // constant and variable declarations must be followed by a semicolon
+            }
+    }
+
+
+
 }
