@@ -6,10 +6,11 @@
 
 #define MAX_NUM 4
 #define MAX_WORD 10
+#define MAX_SYMBOL_TABLE_SIZE 500
 
 //struct for token types
 typedef enum {
-skipsym = 1, identsym, numbersym, plussym, minussym,
+oddsym = 1, identsym, numbersym, plussym, minussym,
 multsym, slashsym, fisym, eqsym, neqsym, lessym, leqsym,
 gtrsym, geqsym, lparentsym, rparentsym, commasym, semicolonsym,
 periodsym, becomessym, beginsym, endsym, ifsym, thensym,
@@ -23,6 +24,18 @@ typedef struct{
     int number;
     char tokenName[MAX_WORD]; 
 } tokenStruct;
+
+
+typedef struct {
+    int kind; // const = 1, var = 2, proc = 3
+    char name[10]; // name up to 11 chars
+    int val; // number (ASCII value)
+    int level; // L level
+    int addr; // M address
+    int mark // to indicate unavailable or deleted
+} symbol;
+
+symbolTable[MAX_SYMBOL_TABLE_SIZE];
 
 //array for reserved words names
 char *reservedWords[] = {"const", "var", "procedure", "call", "begin", "end", "if", "fi", "then", "else", "while", "do", "read", "write"};
