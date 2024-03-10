@@ -772,6 +772,12 @@ void program() {
 }
 
 void printInstructions(){
+    // emit JMP, first instruction
+    strcpy(code[codeIndex]->op, "JMP");
+    code[codeIndex]->l = 0;
+    code[codeIndex]->m = 3;
+    codeIndex++;
+
     int len = codeIndex;
     printf("Line\tOP\tL\tM\n");
     for(int i = 0; i < len; i++) {
@@ -909,12 +915,6 @@ int main(int argc, char ** argv) {
         }
         if (sameToken == 0) character = fgetc(input);
     }
-    //printLexList(tokenFile);
-
-    
-    // fclose(tokenFile);
-
-    // printLexList();
 
     // initialize symbol table
     for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
@@ -934,12 +934,7 @@ int main(int argc, char ** argv) {
         code[i]->m = -1;
     }
     
-    // parser code here
-    // emit JMP
-    strcpy(code[codeIndex]->op, "JMP");
-    code[codeIndex]->l = 0;
-    code[codeIndex]->m = 3;
-    codeIndex++;
+    
 
     program();
 
