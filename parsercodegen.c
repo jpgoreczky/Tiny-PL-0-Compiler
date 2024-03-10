@@ -46,9 +46,6 @@ typedef struct {
 // array for symbol table
 symbol * symbolTable[MAX_SYMBOL_TABLE_SIZE];
 int symIndex = 0; // keeps track of symbol table index
-// initilize symboltable
-
-
 
 // array for reserved words names
 char * reservedWords[] = {"const", "var", "procedure", "call", "begin", "end", "if", "fi", "then", "else", "while", "do", "read", "write"};
@@ -258,10 +255,21 @@ tokenStruct * assignSymbolToken (int sym, char * invalidSymbol, FILE * input, in
     }
 }
 
+// add to symbol table
+void enter (int k, char * name, int val, int level, int addr, int mark) {
+    symbolTable[symIndex]->kind = k;
+    strcpy(symbolTable[symIndex]->name, name);
+    symbolTable[symIndex]->val = val;
+    symbolTable[symIndex]->level = level;
+    symbolTable[symIndex]->addr = addr;
+    symbolTable[symIndex]->mark = mark;
+    symIndex++;
+}
+
 int SYMBOLTABLECHECK() {
     
     for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
-        if (strcmp(symbolTable[i]->name, lexemeList[lexIndex].tokenName) == 0) {
+        if (symbolTable[i] != NULL && strcmp(symbolTable[i]->name, lexemeList[lexIndex].tokenName) == 0) {
             return i;
         }
     }
@@ -271,56 +279,57 @@ int SYMBOLTABLECHECK() {
 token_type getToken(int index) {
     // index is + 1
     //printf("%i\n", index);
-    if (index == lexSize) {
-        return -1;
-    } else {
-        printf("TOKEN %d, INDEX %d NAME %s \n", lexemeList[index].tokenType, lexIndex, lexemeList[index].tokenName);
-        return lexemeList[index].tokenType;
-    }
+    // if (index == lexSize) {
+    //     return -1;
+    // } else {
+    //     return lexemeList[index].tokenType;
+    // }
+
+    return lexemeList[index].tokenType;
 }
 
-void printerror(int index) {
-    if (lexemeList[index].tokenType == 3){ // IF NUMBER
-        if(lexemeList[index].error == 1){
-            printf("\n%d\t\t", lexemeList[index].number);
-            printf("NUMBER TOO LONG");
-        } else {
-            printf("\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
-        }
+// void printerror(int index) {
+//     if (lexemeList[index].tokenType == 3){ // IF NUMBER
+//         if(lexemeList[index].error == 1){
+//             printf("\n%d\t\t", lexemeList[index].number);
+//             printf("NUMBER TOO LONG");
+//         } else {
+//             printf("\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
+//         }
         
-    }else{ // NOT NUMBER
-        if(lexemeList[index].error == 2){
-            printf("\n%s\t\t", lexemeList[index].tokenName);
-            printf("NAME TOO LONG");
-        }else if(lexemeList[index].error == 3){
-            printf("\n%s\t\t", lexemeList[index].tokenName);
-            printf("INVALID SYMBOLS");
-        } else {
-            printf("LEXEME INDEX %d", index);
-            printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
-        }
-    }
-}
+//     }else{ // NOT NUMBER
+//         if(lexemeList[index].error == 2){
+//             printf("\n%s\t\t", lexemeList[index].tokenName);
+//             printf("NAME TOO LONG");
+//         }else if(lexemeList[index].error == 3){
+//             printf("\n%s\t\t", lexemeList[index].tokenName);
+//             printf("INVALID SYMBOLS");
+//         } else {
+//             printf("LEXEME INDEX %d", index);
+//             printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
+//         }
+//     }
+// }
 
-void printLexList() {
-    printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
-    for (int i = 0; i < lexSize; i++) {
-        printerror(i);
-    }
+void printLexList(FILE * tokens) {
+    // printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
+    // for (int i = 0; i < lexSize; i++) {
+    //     printerror(i);
+    // }
     //prints lexeme list
-    printf("\n\nToken List\n");
+    fprintf(tokens, "\n\nToken List\n");
     for (int j = 0; j < lexSize; j++){
         if (lexemeList[j].error != -1) {
             continue;
         }
-        printf("%d ", lexemeList[j].tokenType);
+        fprintf(tokens, "%d ", lexemeList[j].tokenType);
         if(lexemeList[j].tokenType == 2){
-            printf("%s ", lexemeList[j].tokenName);
+            fprintf(tokens, "%s ", lexemeList[j].tokenName);
         } else if (lexemeList[j].tokenType == 3){
-            printf("%d ", lexemeList[j].number);
+            fprintf(tokens, "%d ", lexemeList[j].number);
         }
     }
-    printf("\n");
+    fprintf(tokens, "\n");
 }
 
 void constDeclaration();
@@ -363,17 +372,12 @@ void constDeclaration() {
                         // constants must be assigned an integer value
                         printf("Error: constants must be assigned an integer value\n");
                         exit(0);
-                    } else {
-                        // Add to symbol table
-                        symbolTable[symIndex]->kind = 1;
-                        strcpy(symbolTable[symIndex]->name, tmpName);
-                        symbolTable[symIndex]->val = lexemeList[lexIndex].number;
-                        symbolTable[symIndex]->level = 0;
-                        symbolTable[symIndex]->mark = 0;
+                    } 
+                    // Add to symbol table
+                    enter(1, tmpName, lexemeList[lexIndex].number, 0, 0, 0);
 
-                        symIndex++; // increment symbol table index
-                        token = getToken(lexIndex+=1);
-                    }
+                    token = getToken(lexIndex+=1);
+                    
                 }
             }
         }while(getToken(lexIndex) == commasym);
@@ -402,23 +406,13 @@ void varDeclaration() {
                 // symbol name has already been declared
                 printf("Error: symbol name %s has already been declared\n", lexemeList[lexIndex].tokenName);
                 exit(0);
-            } else {
+            } 
                 // Add to symbol table
                 numVars++;
-                // printf("%i", symIndex);
-                symbolTable[symIndex]->kind = 2;
-                strcpy(symbolTable[symIndex]->name, lexemeList[lexIndex].tokenName);
-                symbolTable[symIndex]->val = lexemeList[lexIndex].number;
-                symbolTable[symIndex]->level = 0;
-                symbolTable[symIndex]->addr = numVars+2;
-                symbolTable[symIndex]->mark = 0;
-
-                printf("symbol table name %s\n", symbolTable[symIndex]->name);
-
-                symIndex++; // increment symbol table index
+                enter(2, lexemeList[lexIndex].tokenName, lexemeList[lexIndex].number, 0, numVars+2, 0);
 
                 token = getToken(lexIndex+=1);
-            }
+            
         } while(getToken(lexIndex) == commasym);
 
         if (getToken(lexIndex) != semicolonsym) {
@@ -534,7 +528,7 @@ void readStatement() {
             exit(0);
         } else {
             token = getToken(lexIndex+=1);
-            // emitting REA
+            // emitting READ
             strcpy(code[codeIndex]->op, "SYS");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 2;
@@ -637,7 +631,7 @@ void readCondition() {
 }
 
 void readExpression() {
-    int token = getToken(lexIndex+=1);
+    int token = getToken(lexIndex);
 
     readTerm();
     while(token == plussym || token == minussym) {
@@ -645,7 +639,7 @@ void readExpression() {
             token = getToken(lexIndex+=1);
             readTerm();
             // emitting ADD
-            strcpy(code[codeIndex]->op, "ADD");
+            strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 14;
             codeIndex++;
@@ -653,40 +647,73 @@ void readExpression() {
             token = getToken(lexIndex+=1);
             readTerm();
             // emitting SUB
-            strcpy(code[codeIndex]->op, "SUB");
+            strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 15;
             codeIndex++;
         }
     }
+}
+
+void readTerm() {
+    int token = getToken(lexIndex);
     
+    readFactor();
+
+    token = getToken(lexIndex+=1);
+
+    while(token == multsym || token == slashsym || token == modsym) {
+        if(token == multsym) {
+            token = getToken(lexIndex+=1);
+            readFactor();
+            // emitting MUL
+            strcpy(code[codeIndex]->op, "OPR");
+            code[codeIndex]->l = 0;
+            code[codeIndex]->m = 3;
+            codeIndex++;
+        } else if(token == slashsym){
+            token = getToken(lexIndex+=1);
+            readFactor();
+            // emitting DIV
+            strcpy(code[codeIndex]->op, "OPR");
+            code[codeIndex]->l = 0;
+            code[codeIndex]->m = 4;
+            codeIndex++;
+        } else {
+            token = getToken(lexIndex+=1);
+            readFactor();
+            // emit mod
+            strcpy(code[codeIndex]->op, "OPR");
+            code[codeIndex]->l = 0;
+            code[codeIndex]->m = 5;
+            codeIndex++;
+        }
+    }
 }
 
 void readFactor() {
-    int token = getToken(lexIndex+=1);
+    int token = getToken(lexIndex);
 
     if (token == identsym) {
-        token = getToken(lexIndex+=1);
-        // printf("token %d\n", token);
         int tmpIndex = SYMBOLTABLECHECK();
+
         if (tmpIndex == -1) {
             //error undecalred variable
             printf("Error: undeclared variable %s\n", lexemeList[lexIndex].tokenName);
             exit(0);
         } else if (symbolTable[tmpIndex]->kind == 1) {
-            //emit lit
+            //emit LIT
             strcpy(code[codeIndex]->op, "LIT");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = symbolTable[tmpIndex]->val;
             codeIndex++;
-        } else {
+        } else if (symbolTable[tmpIndex]->kind == 2) {
             // emit LOD
             strcpy(code[codeIndex]->op, "LOD");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = symbolTable[tmpIndex]->addr;
             codeIndex++;
         }
-        token = getToken(lexIndex+=1);
     } else if (token == numbersym) {
         //emit LIT
         token = getToken(lexIndex+=1);
@@ -709,46 +736,7 @@ void readFactor() {
     } else {
         // arith operations must contain operands par num or sym
         printf("Error: arithmetic equations must contain operands, parentheses, numbers, or symbols\n");
-        // exit(0);
-    }
-}
-
-void readTerm() {
-    printf("readTerm\n");
-
-    
-    readFactor();
-
-    int token = getToken(lexIndex);
-    printf("token %d\n", token);
-
-    while(token == multsym || token == slashsym || token == modsym) {
-        if(token == multsym) {
-            printf("multsym\n");
-            token = getToken(lexIndex+=1);
-            readFactor();
-            // emitting MUL
-            strcpy(code[codeIndex]->op, "MUL");
-            code[codeIndex]->l = 0;
-            code[codeIndex]->m = 4;
-            codeIndex++;
-        } else if(token == slashsym){
-            token = getToken(lexIndex+=1);
-            readFactor();
-            // emitting DIV
-            strcpy(code[codeIndex]->op, "DIV");
-            code[codeIndex]->l = 0;
-            code[codeIndex]->m = 5;
-            codeIndex++;
-        } else {
-            token = getToken(lexIndex+=1);
-            readFactor();
-            // emit mod
-            strcpy(code[codeIndex]->op, "MOD");
-            code[codeIndex]->l = 0;
-            code[codeIndex]->m = 7;
-            codeIndex++;
-        }
+        exit(0);
     }
 }
 
@@ -757,7 +745,6 @@ void block() {
     varDeclaration();
 
     // emit INC
-    printf("%d\n", codeIndex);
     strcpy(code[codeIndex]->op, "INC");
     code[codeIndex]->l = 0;
     code[codeIndex]->m = numVars + 3;
@@ -778,7 +765,7 @@ void program() {
     }
 
     //emit halt
-    strcpy(code[codeIndex]->op, "SIO");
+    strcpy(code[codeIndex]->op, "SYS");
     code[codeIndex]->l = 0;
     code[codeIndex]->m = 3;
     codeIndex++;
@@ -794,26 +781,27 @@ void printInstructions(){
 }
 
 void printSymbolTable() {
+    // setting mark to 1 after generating code
+    for (int i = 0; i < symIndex; i++) {
+        symbolTable[i]->mark = 1;
+    }
+
     int len = symIndex;
 
     printf("Symbol Table: \n");
     printf("Kind | Name\t\t | Value | Level | Address | Mark\n");
     printf("---------------------------------------------------------\n");
-    for (int i = 0; i < len; i++)
-  {
 
-    printf("%d    |", symbolTable[i]->kind);
+    for (int i = 0; i < len; i++) {
+        printf("%d    |", symbolTable[i]->kind);
+        printf("\t\t       %s |     %d |", symbolTable[i]->name, symbolTable[i]->val);
 
-    // for (int j = 0; j < 12 - strlen(symbolTable[i]->name); j++) {
-    //   printf(" ");
-    // }
+        if (symbolTable[i]->kind == 2)
+            printf("     %d |       %d |", symbolTable[i]->level, symbolTable[i]->addr);
+        else
+            printf("     - |       - |");
 
-    printf("\t\t       %s |     %d |", symbolTable[i]->name, symbolTable[i]->val);
-    if (symbolTable[i]->kind == 2)
-      printf("     %d |       %d |", symbolTable[i]->level, symbolTable[i]->addr);
-    else
-      printf("     - |       - |");
-    printf("    %d\n", symbolTable[i]->mark);
+        printf("    %d\n", symbolTable[i]->mark);
   }
 }
 
@@ -821,7 +809,7 @@ int main(int argc, char ** argv) {
     bool sameToken = false; //used in the event of multiple character tokens
 
     FILE *input = fopen(argv[1], "r");
-    // FILE * tokenFile = fopen("tokens.txt", "w");
+    FILE * tokens = fopen("tokens.txt", "w");
 
     int character = fgetc(input); //stores each character in file
     //printSourceProgram(input);
@@ -926,8 +914,7 @@ int main(int argc, char ** argv) {
     
     // fclose(tokenFile);
 
-    printLexList();
-    // free(lexemeList);
+    // printLexList();
 
     // initialize symbol table
     for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
@@ -956,11 +943,18 @@ int main(int argc, char ** argv) {
 
     program();
 
-    // printf("lex index %d", lexIndex);
-    // printf("%s", lexemeList[lexIndex].tokenName);
-
     printInstructions();
     printSymbolTable();
-    // fclose(input);
-    // free(lexemeList);
+
+    fclose(input);
+
+    printLexList(tokens);
+    fclose(tokens);
+
+    // free memory
+    free(lexemeList);
+
+    for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
+    free(symbolTable[i]);
+}
 }
