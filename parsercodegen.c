@@ -288,36 +288,37 @@ token_type getToken(int index) {
     return lexemeList[index].tokenType;
 }
 
-// void printerror(int index) {
-//     if (lexemeList[index].tokenType == 3){ // IF NUMBER
-//         if(lexemeList[index].error == 1){
-//             printf("\n%d\t\t", lexemeList[index].number);
-//             printf("NUMBER TOO LONG");
-//         } else {
-//             printf("\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
-//         }
+void printerror(int index) {
+    if (lexemeList[index].tokenType == 3){ // IF NUMBER
+        if(lexemeList[index].error == 1){
+            printf("\n%d\t\t", lexemeList[index].number);
+            printf("Error: Number too long");
+        } else {
+            printf("\n%d\t\t%d\t", lexemeList[index].number, lexemeList[index].tokenType);
+        }
         
-//     }else{ // NOT NUMBER
-//         if(lexemeList[index].error == 2){
-//             printf("\n%s\t\t", lexemeList[index].tokenName);
-//             printf("NAME TOO LONG");
-//         }else if(lexemeList[index].error == 3){
-//             printf("\n%s\t\t", lexemeList[index].tokenName);
-//             printf("INVALID SYMBOLS");
-//         } else {
-//             printf("LEXEME INDEX %d", index);
-//             printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
-//         }
-//     }
-// }
+    }else{ // NOT NUMBER
+        if(lexemeList[index].error == 2){
+            printf("\n%s\t\t", lexemeList[index].tokenName);
+            printf("Error: Name too long");
+        }else if(lexemeList[index].error == 3){
+            printf("\n%s\t\t", lexemeList[index].tokenName);
+            printf("Error: Invalid Symbol");
+        } else {
+            printf("\n%s\t\t%d\t", lexemeList[index].tokenName, lexemeList[index].tokenType);
+        }
+    }
+}
 
 void printLexList(FILE * tokens) {
-    // printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
-    // for (int i = 0; i < lexSize; i++) {
-    //     printerror(i);
-    // }
+    printf("\nLexeme Table:\nLexeme\t\tToken Type\n");
+    for (int i = 0; i < lexSize; i++) {
+        printerror(i);
+    }
+    printf("\n");
+
     //prints lexeme list
-    fprintf(tokens, "\n\nToken List\n");
+    fprintf(tokens, "Token List\n");
     for (int j = 0; j < lexSize; j++){
         if (lexemeList[j].error != -1) {
             continue;
@@ -350,26 +351,23 @@ void constDeclaration() {
             int token = getToken(lexIndex+=1);
 
             if (token != identsym) {
-                // const, var, and read keywords must be followed by identifier
                 printf("Error: constant, variable, and read keywords must be followed by identifier\n");
                 exit(0);
             } else if (SYMBOLTABLECHECK() != -1) {
-                // symbol name has already been declared
                 printf("Error: symbol name %s has already been declared\n", lexemeList[lexIndex].tokenName);
                 exit(0);
             } else {
                 // Save name
                 strcpy(tmpName, lexemeList[lexIndex].tokenName);
+
                 token = getToken(lexIndex+=1);
                 if (token != eqsym) {
-                    // constants must be assigned with =
                     printf("Error: constants must be assigned with =\n");
                     exit(0);
 
                 } else {
                     token = getToken(lexIndex+=1);
                     if (token != numbersym) {
-                        // constants must be assigned an integer value
                         printf("Error: constants must be assigned an integer value\n");
                         exit(0);
                     } 
@@ -377,13 +375,11 @@ void constDeclaration() {
                     enter(1, tmpName, lexemeList[lexIndex].number, 0, 0, 0);
 
                     token = getToken(lexIndex+=1);
-                    
                 }
             }
         }while(getToken(lexIndex) == commasym);
 
         if (getToken(lexIndex) != semicolonsym) {
-            // constant and variable declarations must be followed by a semicolon
             printf("Error: constant and variable declarations must be followed by a semicolon\n");
             exit(0);
         }
@@ -393,17 +389,14 @@ void constDeclaration() {
 }
 
 void varDeclaration() {
-    //int count = 0; // num vars declared
     if (getToken(lexIndex) == varsym) {
         do{
             int token = getToken(lexIndex+=1);
         
             if (token != identsym) {
-                // const, var, and read keywords must be followed by identifier
                 printf("Error: constant, variable, and read keywords must be followed by identifier\n");
                 exit(0);
             } else if (SYMBOLTABLECHECK() != -1) {
-                // symbol name has already been declared
                 printf("Error: symbol name %s has already been declared\n", lexemeList[lexIndex].tokenName);
                 exit(0);
             } 
@@ -416,7 +409,6 @@ void varDeclaration() {
         } while(getToken(lexIndex) == commasym);
 
         if (getToken(lexIndex) != semicolonsym) {
-            // constant and variable declarations must be followed by a semicolon
             printf("Error: constant and variable declarations must be followed by a semicolon\n");
             exit(0);
         }
@@ -428,20 +420,16 @@ void readStatement() {
     int token = getToken(lexIndex);
 
     if (token == identsym) {
-
         int tmpIndex = SYMBOLTABLECHECK();
          if (tmpIndex == -1) {
-              // undeclared identitifer
               printf("Error: undeclared identifier %s\n", lexemeList[lexIndex].tokenName);
               exit(0);
          } else if (symbolTable[tmpIndex]->kind != 2) {
-              // only var values may be altered
                 printf("Error: only var values may be altered\n");
                 exit(0);
          } else {
               token = getToken(lexIndex+=1);
               if(token != becomessym) {
-                   // must be followed by := ERROR
                     printf("Error: must be followed by :=\n");
                     exit(0);
               } else {
@@ -463,7 +451,6 @@ void readStatement() {
         } while (getToken(lexIndex) == semicolonsym);
         
         if (getToken(lexIndex) != endsym) {
-            // begin must be followed by end ERROR
             printf("Error: begin must be followed by end\n");
             exit(0);
         }
@@ -471,12 +458,13 @@ void readStatement() {
         return;
     } else if(token == ifsym) {
         token = getToken(lexIndex+=1);
-        // condition function
+        
+        readCondition();
+
         int jpcIndex = codeIndex;
         strcpy(code[jpcIndex]->op, "JPC");
         code[jpcIndex]->l = 0;
         if(token != thensym) {
-            // if must be followed by then ERROR
             printf("Error: if must be followed by then\n");
             exit(0);
         }
@@ -489,7 +477,9 @@ void readStatement() {
     } else if(token == whilesym) {
         token = getToken(lexIndex+=1);
         int loopIndex = codeIndex;
-        // condition function
+
+        readCondition();
+        
         if(token != dosym) {
             printf("Error: while must be followed by do\n");
             exit(0);
@@ -504,6 +494,7 @@ void readStatement() {
         strcpy(code[codeIndex]->op, "JMP");
         code[codeIndex]->l = 0;
         code[codeIndex]->m = loopIndex;
+
         // m parameter of JPC
         codeIndex++;
         code[jpcIndex]->m = codeIndex;
@@ -913,6 +904,7 @@ int main(int argc, char ** argv) {
         symbolTable[i]->addr = -1;
         symbolTable[i]->mark = -1;
     }
+
     // initialize code array
     for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
         code[i] = (instruction *) malloc(sizeof(instruction));
@@ -921,13 +913,13 @@ int main(int argc, char ** argv) {
         code[i]->m = -1;
     }
     
-    
     // emit JMP, first instruction
     strcpy(code[codeIndex]->op, "JMP");
     code[codeIndex]->l = 0;
     code[codeIndex]->m = 3;
     codeIndex++;
-    
+
+    // parse
     program();
 
     printInstructions();
