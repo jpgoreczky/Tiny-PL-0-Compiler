@@ -491,17 +491,16 @@ void readStatement() {
         int loopIndex = codeIndex;
         // condition function
         if(token != dosym) {
-            // while must be followed by do ERROR
             printf("Error: while must be followed by do\n");
             exit(0);
         }
         int jpcIndex = codeIndex;
-        // emitting JPC
+        // emit JPC
         strcpy(code[jpcIndex]->op, "JPC");
         code[jpcIndex]->l = 0;
 
         readStatement();
-        // emitting JMP
+        // emit JMP
         strcpy(code[codeIndex]->op, "JMP");
         code[codeIndex]->l = 0;
         code[codeIndex]->m = loopIndex;
@@ -513,28 +512,25 @@ void readStatement() {
     } else if(token == readsym) {
         token = getToken(lexIndex+=1);
         if(token != identsym) {
-            // cons var read keywords must be followed by identifier ERROR
             printf("Error: const, var, and read keywords must be followed by identifier\n");
             exit(0);
         }
         int tmpIndex = SYMBOLTABLECHECK();
         if(tmpIndex == -1) {
-            // undeclared identifier
             printf("Error: undeclared identifier %s\n", lexemeList[lexIndex].tokenName);
             exit(0);
         } else if(symbolTable[tmpIndex]->kind != 2) {
-            // only var values may be altered
             printf("Error: only var values may be altered\n");
             exit(0);
         } else {
             token = getToken(lexIndex+=1);
-            // emitting READ
+            // emit READ
             strcpy(code[codeIndex]->op, "SYS");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 2;
             codeIndex++;
 
-            //emitting STO
+            //emit STO
             strcpy(code[codeIndex]->op, "STO");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = symbolTable[tmpIndex]->addr;
@@ -545,7 +541,7 @@ void readStatement() {
     }  else if(token == writesym) {
         token = getToken(lexIndex+=1);
         readExpression();
-        // emitting write
+        // emit write
         strcpy(code[codeIndex]->op, "SYS");
         code[codeIndex]->l = 0;
         code[codeIndex]->m = 1;
@@ -561,7 +557,7 @@ void readCondition() {
     if(token == oddsym) {
         token = getToken(lexIndex+=1);
         readExpression();
-        // emitting ODD
+        // emit ODD
         strcpy(code[codeIndex]->op, "ODD");
         code[codeIndex]->l = 0;
         code[codeIndex]->m = 11;
@@ -571,7 +567,7 @@ void readCondition() {
         if(token == eqsym) {
             token = getToken(lexIndex+=1);
             readExpression();
-            // emitting EQL
+            // emit EQL
             strcpy(code[codeIndex]->op, "EQL");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 8;
@@ -579,7 +575,7 @@ void readCondition() {
         } else if(token == neqsym) {
             token = getToken(lexIndex+=1);
             readExpression();
-            // emitting NEQ
+            // emit NEQ
             strcpy(code[codeIndex]->op, "NEQ");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 9;
@@ -590,14 +586,14 @@ void readCondition() {
             if(token == eqsym) {
                 token = getToken(lexIndex+=1);
                 readExpression();
-                // emitting LEQ
+                // emit LEQ
                 strcpy(code[codeIndex]->op, "LEQ");
                 code[codeIndex]->l = 0;
                 code[codeIndex]->m = 11;
                 codeIndex++;
             } else {
                 readExpression();
-                // emitting LSS
+                // emit LSS
                 strcpy(code[codeIndex]->op, "LSS");
                 code[codeIndex]->l = 0;
                 code[codeIndex]->m = 10;
@@ -609,21 +605,20 @@ void readCondition() {
             if(token == eqsym) {
                 token = getToken(lexIndex+=1);
                 readExpression();
-                // emitting GEQ
+                // emit GEQ
                 strcpy(code[codeIndex]->op, "GEQ");
                 code[codeIndex]->l = 0;
                 code[codeIndex]->m = 12;
                 codeIndex++;
             } else {
                 readExpression();
-                // emitting GTR
+                // emit GTR
                 strcpy(code[codeIndex]->op, "GTR");
                 code[codeIndex]->l = 0;
                 code[codeIndex]->m = 13;
                 codeIndex++;
             }
         } else {
-            // error condition must contain comparison operator
             printf("Error: condition must contain comparison operator\n");
             exit(0);
         }
@@ -634,11 +629,12 @@ void readExpression() {
     int token = getToken(lexIndex);
 
     readTerm();
+
     while(token == plussym || token == minussym) {
         if(token == plussym) {
             token = getToken(lexIndex+=1);
             readTerm();
-            // emitting ADD
+            // emit ADD
             strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 14;
@@ -646,7 +642,7 @@ void readExpression() {
         } else {
             token = getToken(lexIndex+=1);
             readTerm();
-            // emitting SUB
+            // emit SUB
             strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 15;
@@ -666,7 +662,7 @@ void readTerm() {
         if(token == multsym) {
             token = getToken(lexIndex+=1);
             readFactor();
-            // emitting MUL
+            // emit MUL
             strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 3;
@@ -674,7 +670,7 @@ void readTerm() {
         } else if(token == slashsym){
             token = getToken(lexIndex+=1);
             readFactor();
-            // emitting DIV
+            // emit DIV
             strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 4;
@@ -682,7 +678,7 @@ void readTerm() {
         } else {
             token = getToken(lexIndex+=1);
             readFactor();
-            // emit mod
+            // emit MOD
             strcpy(code[codeIndex]->op, "OPR");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = 5;
@@ -698,11 +694,10 @@ void readFactor() {
         int tmpIndex = SYMBOLTABLECHECK();
 
         if (tmpIndex == -1) {
-            //error undecalred variable
             printf("Error: undeclared variable %s\n", lexemeList[lexIndex].tokenName);
             exit(0);
         } else if (symbolTable[tmpIndex]->kind == 1) {
-            //emit LIT
+            // emit LIT
             strcpy(code[codeIndex]->op, "LIT");
             code[codeIndex]->l = 0;
             code[codeIndex]->m = symbolTable[tmpIndex]->val;
@@ -715,7 +710,7 @@ void readFactor() {
             codeIndex++;
         }
     } else if (token == numbersym) {
-        //emit LIT
+        // emit LIT
         token = getToken(lexIndex+=1);
         strcpy(code[codeIndex]->op, "LIT");
         code[codeIndex]->l = 0;
@@ -727,14 +722,12 @@ void readFactor() {
         readExpression();
 
         if (token != rparentsym) {
-            //error not a closed parenthesis , right must follow left
             printf("Error: right parenthesis must follow left parenthesis\n");
             exit(0);
         }
 
         token = getToken(lexIndex+=1);
     } else {
-        // arith operations must contain operands par num or sym
         printf("Error: arithmetic equations must contain operands, parentheses, numbers, or symbols\n");
         exit(0);
     }
@@ -772,12 +765,6 @@ void program() {
 }
 
 void printInstructions(){
-    // emit JMP, first instruction
-    strcpy(code[codeIndex]->op, "JMP");
-    code[codeIndex]->l = 0;
-    code[codeIndex]->m = 3;
-    codeIndex++;
-
     int len = codeIndex;
     printf("Line\tOP\tL\tM\n");
     for(int i = 0; i < len; i++) {
@@ -935,7 +922,12 @@ int main(int argc, char ** argv) {
     }
     
     
-
+    // emit JMP, first instruction
+    strcpy(code[codeIndex]->op, "JMP");
+    code[codeIndex]->l = 0;
+    code[codeIndex]->m = 3;
+    codeIndex++;
+    
     program();
 
     printInstructions();
