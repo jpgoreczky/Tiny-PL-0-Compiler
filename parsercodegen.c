@@ -1,3 +1,5 @@
+// Authors: Josie Goreczky and Kyutza Lopez-Herrera
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -791,10 +793,8 @@ int main(int argc, char ** argv) {
     bool sameToken = false; //used in the event of multiple character tokens
 
     FILE *input = fopen(argv[1], "r");
-    FILE * tokens = fopen("tokens.txt", "w");
 
     int character = fgetc(input); //stores each character in file
-    //printSourceProgram(input);
     fclose(input);
     
     // initializing array 
@@ -929,7 +929,6 @@ int main(int argc, char ** argv) {
     printSymbolTable();
 
     fclose(input);
-    fclose(tokens);
 
     // free memory
     free(lexemeList);
