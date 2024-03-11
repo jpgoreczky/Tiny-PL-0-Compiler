@@ -222,6 +222,8 @@ tokenStruct * assignSymbolToken (int sym, char * invalidSymbol, FILE * input, in
         } else if (token == '<') {
             lexemeList[lexSize].error = 3;
             strcpy(lexemeList[lexSize].tokenName, "><");
+            printf("Error: Invalid Symbol\n");
+            exit(0);
         }
         else {
             lexemeList[lexSize].tokenType = gtrsym;
@@ -245,11 +247,15 @@ tokenStruct * assignSymbolToken (int sym, char * invalidSymbol, FILE * input, in
         }
         else {
             lexemeList[lexSize].error = 3;
+            printf("Error: Invalid Symbol\n");
+            exit(0);
         }
         break;
     default:
         lexemeList[lexSize].error = 3;
         strcpy(lexemeList[lexSize].tokenName, invalidSymbol);
+        printf("Error: Invalid Symbol\n");
+        exit(0);
         lexSize++;
         break;
     }
@@ -277,14 +283,6 @@ int SYMBOLTABLECHECK() {
 }
 
 token_type getToken(int index) {
-    // index is + 1
-    //printf("%i\n", index);
-    // if (index == lexSize) {
-    //     return -1;
-    // } else {
-    //     return lexemeList[index].tokenType;
-    // }
-
     return lexemeList[index].tokenType;
 }
 
@@ -829,7 +827,10 @@ int main(int argc, char ** argv) {
             while (isalpha(character)) {
                 //errors out if identifier is longer than 11 characters
                 if (wordLen > MAX_WORD) {
-                    lexemeList[lexSize].error = 2;      
+                    lexemeList[lexSize].error = 2;     
+                    printf("Error: Name too long\n"); 
+                    exit(0);
+                    
                     character = fgetc(input);   // next character
                     sameToken = false; //now beginning to scan new token
                     break;
@@ -863,6 +864,8 @@ int main(int argc, char ** argv) {
                 // Number is too long
                 if (digitLen > MAX_NUM) {
                     lexemeList[lexSize].error = 1;
+                    printf("Error: Number too long\n");
+                    exit(0);
                     character = fgetc(input);
                     break;
                 }
@@ -926,14 +929,12 @@ int main(int argc, char ** argv) {
     printSymbolTable();
 
     fclose(input);
-
-    printLexList(tokens);
     fclose(tokens);
 
     // free memory
     free(lexemeList);
 
     for (int i = 0; i < MAX_SYMBOL_TABLE_SIZE; i++) {
-    free(symbolTable[i]);
-}
+        free(symbolTable[i]);
+    }
 }
